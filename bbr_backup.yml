@@ -1,0 +1,65 @@
+resources:
+- name: bbr-pipeline-tasks-repo
+  type: git
+  source:
+    uri: git@github.com:SergeyMuha/bbr-backup.git
+    private_key: ((git_dont.private_key))
+    branch: master
+
+- name: bbr-release
+  type: s3
+  source:
+    access_key_id: ((s3_access_key_id))
+    bucket: ((s3_buckets_cli))
+    endpoint: ((s3_endpoint))
+    secret_access_key: ((s3_secret_access_key))
+    regexp: bbr/bbr-(.*).tar
+
+
+#- name: bbr-release
+#  type: github-release
+#  source:
+#    owner: cloudfoundry-incubator
+#    repository: bosh-backup-and-restore
+
+- name: director-backup-artifact
+  type: s3
+  source:
+    access_key_id: ((s3_access_key_id))
+    bucket: ((s3_buckets_cli))
+    endpoint: ((s3_endpoint))
+    secret_access_key: ((s3_secret_access_key))
+    regexp: director-backup-artifact/director-backup_(.*).tar
+
+
+- name: bbr_image
+  type: docker-image
+  source:
+    repository: harbor.rnd.altoros.com/library/pcfplatformrecovery/bbr-pcf-pipeline-tasks
+    tag: final
+
+jobs:
+- name: bbr_backup
+  serial: true
+  plan:
+    - get: bbr-pipeline-tasks-repo
+#    - get: binary
+    - get: bbr_image
+    - get: bbr-release
+#      params:
+#        globs: ["*.tar"]
+    - task: extract-bbr
+      file: bbr-pipeline-tasks-repo/tasks/extract-bbr-binary/task.yml
+      image: bbr_image
+    - task: bbr-backup-director
+      file: bbr-pipeline-tasks-repo/tasks/bbr-backup-director/task.yml
+      image: bbr_image
+      params:
+        OPSMAN_URL: ((ops_mgr_url))
+        OPSMAN_USERNAME: ((ops_user.username))
+        OPSMAN_PASSWORD: ((ops_user.password))
+        OPSMAN_PRIVATE_KEY: ((opsmanssh.public_key))
+        SKIP_SSL_VALIDATION: true
+    - put: director-backup-artifact
+      params:
+        file: director-backup-artifact/director-backup_*.tar
