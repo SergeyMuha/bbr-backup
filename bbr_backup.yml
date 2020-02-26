@@ -58,7 +58,7 @@ jobs:
         OPSMAN_URL: ((ops_mgr_url))
         OPSMAN_USERNAME: ((ops_user.username))
         OPSMAN_PASSWORD: ((ops_user.password))
-        OPSMAN_PRIVATE_KEY: ((opsmanssh.public_key))
+      #  OPSMAN_PRIVATE_KEY: ((opsmanssh.public_key))
         SKIP_SSL_VALIDATION: true
     - put: director-backup-artifact
       params:
