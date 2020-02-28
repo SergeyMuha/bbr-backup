@@ -31,6 +31,23 @@ resources:
     secret_access_key: ((s3_secret_access_key))
     regexp: director-backup-artifact/director-backup_(.*).tar
 
+- name: pas-backup-artifact
+  type: s3
+  source:
+    access_key_id: ((s3_access_key_id))
+    bucket: ((s3_buckets_cli))
+    endpoint: ((s3_endpoint))
+    secret_access_key: ((s3_secret_access_key))
+    regexp: pas-backup-artifact/pas-backup_(.*).tar
+
+- name: pks-backup-artifact
+  type: s3
+  source:
+    access_key_id: ((s3_access_key_id))
+    bucket: ((s3_buckets_cli))
+    endpoint: ((s3_endpoint))
+    secret_access_key: ((s3_secret_access_key))
+    regexp: pks-backup-artifact/pks-backup_(.*).tar
 
 - name: bbr_image
   type: docker-image
@@ -51,6 +68,15 @@ jobs:
     - task: extract-bbr
       file: bbr-pipeline-tasks-repo/tasks/extract-bbr-binary/task.yml
       image: bbr_image
+    - task: bbr-cleanup-director
+      file: bbr-pipeline-tasks-repo/tasks/bbr-cleanup-director/task.yml
+      image: bbr_image
+      params:
+        OPSMAN_URL: ((ops_mgr_url))
+        OPSMAN_USERNAME: ((ops_user.username))
+        OPSMAN_PASSWORD: ((ops_user.password))
+      #  OPSMAN_PRIVATE_KEY: ((opsmanssh.public_key))
+        SKIP_SSL_VALIDATION: true
     - task: bbr-backup-director
       file: bbr-pipeline-tasks-repo/tasks/bbr-backup-director/task.yml
       image: bbr_image
@@ -63,3 +89,45 @@ jobs:
     - put: director-backup-artifact
       params:
         file: director-backup-artifact/director-backup_*.tar
+    - task: bbr-cleanup-pas
+      file: bbr-pipeline-tasks-repo/tasks/bbr-cleanup-pas/task.yml
+      image: bbr_image
+      params:
+        OPSMAN_URL: ((ops_mgr_url))
+        OPSMAN_USERNAME: ((ops_user.username))
+        OPSMAN_PASSWORD: ((ops_user.password))
+      #  OPSMAN_PRIVATE_KEY: ((opsmanssh.public_key))
+        SKIP_SSL_VALIDATION: true
+    - task: bbr-backup-pas
+      file: bbr-pipeline-tasks-repo/tasks/bbr-backup-pas/task.yml
+      image: bbr_image
+      params:
+        OPSMAN_URL: ((ops_mgr_url))
+        OPSMAN_USERNAME: ((ops_user.username))
+        OPSMAN_PASSWORD: ((ops_user.password))
+      #  OPSMAN_PRIVATE_KEY: ((opsmanssh.public_key))
+        SKIP_SSL_VALIDATION: true
+    - put: pas-backup-artifact
+      params:
+        file: pas-backup-artifact/pas-backup_*.tar
+    - task: bbr-cleanup-pks
+      file: bbr-pipeline-tasks-repo/tasks/bbr-cleanup-pks/task.yml
+      image: bbr_image
+      params:
+        OPSMAN_URL: ((ops_mgr_url))
+        OPSMAN_USERNAME: ((ops_user.username))
+        OPSMAN_PASSWORD: ((ops_user.password))
+      #  OPSMAN_PRIVATE_KEY: ((opsmanssh.public_key))
+        SKIP_SSL_VALIDATION: true
+    - task: bbr-backup-pks
+      file: bbr-pipeline-tasks-repo/tasks/bbr-backup-pks/task.yml
+      image: bbr_image
+      params:
+        OPSMAN_URL: ((ops_mgr_url))
+        OPSMAN_USERNAME: ((ops_user.username))
+        OPSMAN_PASSWORD: ((ops_user.password))
+      #  OPSMAN_PRIVATE_KEY: ((opsmanssh.public_key))
+        SKIP_SSL_VALIDATION: true
+    - put: pks-backup-artifact
+      params:
+        file: pks-backup-artifact/pks-backup_*.tar
